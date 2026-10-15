@@ -3,6 +3,7 @@ const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const {genrateAccessToken, genrateRefreshToken} = require("../utils/genrateJwtToken");
 const hashPass = require("../utils/hashPass");
+const cloudinaryUpload = require("../utils/cloudinary");
 
 const registerUser = async (req, res) => {
   try {
@@ -26,9 +27,13 @@ const registerUser = async (req, res) => {
 
     const hashedPass = await hashPass(password);
 
+    const avtarPath = req.file?.path;
+    const uploadAvtar = await cloudinaryUpload(avtarPath);
+
     const user = await User.create({
       username,
       email,
+      avtar: uploadAvtar.url,
       password: hashedPass,
     });
 
@@ -49,7 +54,7 @@ const registerUser = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: error.errmsg,
+      message: error.message,
     });
   }
 };
