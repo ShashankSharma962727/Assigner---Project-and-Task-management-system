@@ -10,7 +10,9 @@ app.use(cookieParser());
 
 
 const authRouter = require("./routes/auth.routes");
+const propertyRouter = require("./routes/property.routes");
 
 app.use("/api/v1/auth",authRouter);
+app.use("/api/v1/property",propertyRouter);
 
 module.exports = app;

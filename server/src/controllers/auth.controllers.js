@@ -1,9 +1,13 @@
 const { trusted } = require("mongoose");
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
-const {genrateAccessToken, genrateRefreshToken} = require("../utils/genrateJwtToken");
+const {
+  genrateAccessToken,
+  genrateRefreshToken,
+} = require("../utils/genrateJwtToken");
 const hashPass = require("../utils/hashPass");
 const cloudinaryUpload = require("../utils/cloudinary");
+const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
   try {
@@ -104,15 +108,13 @@ const loginUser = async (req, res) => {
     res.cookie("refresh-token", refreshToken, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
-      secure: trusted
     });
 
     return res.status(200).json({
-      success: false,
+      success: true,
       message: "Login Successfully!",
-      accessToken
-    })
-
+      accessToken,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -121,4 +123,96 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const getProfile = async (req, res) => {
+  try {
+    const { userid } = req.user;
+
+    const user = await User.findById(userid).select("-password");
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const genrateNewAccessToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies["refresh-token"];
+
+    if (!refreshToken)
+      return res
+        .status(404)
+        .json({ success: false, message: "Refresh token not found" });
+
+    const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const user = await User.findById(decode.userid);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const newAccessToken = genrateAccessToken(
+      user._id,
+      user.username,
+      user.email,
+      "15m",
+    );
+    const newRefreshToken = genrateRefreshToken(
+      user._id,
+      user.username,
+      user.email,
+      "7d",
+    );
+
+    res.cookie("refresh-token", newRefreshToken, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Access Token created",
+      newAccessToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "internal server error",
+    });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    res.clearCookie("refresh-token", {
+      httpOnly: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  genrateNewAccessToken,
+  logout,
+};
