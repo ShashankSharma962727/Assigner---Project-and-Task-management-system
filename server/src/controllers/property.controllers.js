@@ -249,7 +249,7 @@ const myProperties = async (req, res) => {
 //change status of property
 const PropertyStatus = async (req, res) => {
   try {
-    
+    // test
   } catch (error) {
     return res.status(500).json({
       success: false,
