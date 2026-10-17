@@ -1,7 +1,19 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 
-// https://vite.dev/config/
+// Express listens on process.env.PORT from server/.env, currently 3000
+// (fallback in server/server.js is 5000 if PORT is unset).
+const API_PROXY_TARGET = "http://localhost:3000";
+
 export default defineConfig({
-  plugins: [react()],
-})
+  plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      "/api": {
+        target: API_PROXY_TARGET,
+        changeOrigin: true,
+      },
+    },
+  },
+});

@@ -7,7 +7,7 @@ const authRouter = express.Router();
 authRouter.post("/register",upload.single('avtar'), registerUser);
 authRouter.post("/login", loginUser);
 authRouter.get("/profile",checkAccessToken, getProfile);
-authRouter.get("/refresh-token",checkAccessToken, genrateNewAccessToken);
+authRouter.get("/refresh-token", genrateNewAccessToken);
 authRouter.get("/logout",checkAccessToken, logout);
 
 module.exports = authRouter;

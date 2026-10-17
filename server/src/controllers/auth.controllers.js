@@ -184,6 +184,17 @@ const genrateNewAccessToken = async (req, res) => {
       newAccessToken,
     });
   } catch (error) {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError" ||
+      error.name === "NotBeforeError"
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "internal server error",

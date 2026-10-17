@@ -7,7 +7,8 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start": "node --watch server.js"
+    "start": "node --watch server.js",
+    "test": "node --test tests/isPropertyOwner.test.js tests/property.authorization.test.js tests/refresh-token.test.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -19,5 +20,8 @@
     "mongoose": "^9.11.2",
     "multer": "^2.4.0",
     "nodemailer": "^10.1.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.1"
   }
 }

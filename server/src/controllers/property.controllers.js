@@ -1,5 +1,6 @@
 const propertyModel = require("../models/property.model");
 const cloudinaryUpload = require("../utils/cloudinary");
+const isPropertyOwner = require("../utils/isPropertyOwner");
 
 //create property
 const listProperty = async (req, res) => {
@@ -142,6 +143,13 @@ const updateProperty = async (req, res) => {
       });
     }
 
+    if (!isPropertyOwner(existingProperty, req.user?.userid)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this property",
+      });
+    }
+
     // Update only the fields provided
     const updateData = {};
 
@@ -176,7 +184,7 @@ const updateProperty = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     return res.status(200).json({
@@ -192,25 +200,33 @@ const updateProperty = async (req, res) => {
   }
 };
 
-
 //delete property
 const deleteProperty = async (req, res) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
 
-    const property = await propertyModel.findByIdAndDelete(id);
+    const existingProperty = await propertyModel.findById(id);
 
-    if(!property){
+    if (!existingProperty) {
       return res.status(404).json({
         success: false,
         message: "Property not found!",
       });
     }
 
+    if (!isPropertyOwner(existingProperty, req.user?.userid)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this property",
+      });
+    }
+
+    await propertyModel.findByIdAndDelete(id);
+
     return res.status(200).json({
       success: true,
-      message: "Property Deleted"
-    })
+      message: "Property Deleted",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -224,9 +240,9 @@ const myProperties = async (req, res) => {
   try {
     const owner = req.user.userid;
 
-    const properties = await propertyModel.find({owner});
+    const properties = await propertyModel.find({ owner });
 
-    if(properties.length === 0){
+    if (properties.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Property not found!",
@@ -236,8 +252,8 @@ const myProperties = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Fetch successfully!",
-      properties
-    })
+      properties,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -246,17 +262,6 @@ const myProperties = async (req, res) => {
   }
 };
 
-//change status of property
-const PropertyStatus = async (req, res) => {
-  try {
-    // test
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
 module.exports = {
   listProperty,
   getProperties,
@@ -264,5 +269,4 @@ module.exports = {
   updateProperty,
   deleteProperty,
   myProperties,
-  PropertyStatus,
 };
